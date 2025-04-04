@@ -217,15 +217,8 @@ const connectiontodatabase = async () => {
 connectiontodatabase();
 
 // Image storage configuration
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './uploads');
-    },
-    filename: function (req, file, cb) {
-        const uniqueid = uuidv4();
-        cb(null, uniqueid + "" + file.originalname);
-    }
-});
+const storage = multer.memoryStorage();
+    
 
 const upload = multer({ 
     storage: storage,
@@ -236,103 +229,68 @@ const upload = multer({
 const randoms = uuidv4();
 const randoms2 = uuidv4();
 
+
 app.post('/api/register', upload.fields([
-    { name: "clg_id" },
+    { name: "clg_id" }, 
     { name: "aadharImage" }
 ]), async (req, res) => {
-    const { 
-        event,
-        teamName,
-        teamLeaderName,
-        email,
-        mobile,
-        gender,
-        college,
-        course,
-        year,
-        rollno,
-        aadhar,
-        teamSize 
-    } = req.body;
+    try {
+        const { 
+            event, teamName, teamLeaderName, email, mobile, gender, college, course, year, rollno, aadhar, teamSize
+        } = req.body;
 
-    console.log(req.body);
+        console.log("Received data:", req.body);
 
-    try {   
         if (!email || !mobile || !event || !teamName || !teamLeaderName || !college || !course || !year || !aadhar || !rollno || !gender || !teamSize) {
-            console.log("Missing required fields");
-            return res.status(400).send({ "message": "Missing required fields" });
+            return res.status(400).json({ message: "Missing required fields" });
         }
 
         const findStudent = await Model.findOne({ email, mobile });
         if (findStudent) {
-            return res.status(409).send({ "message": "You are already registered" });
+            return res.status(409).json({ message: "You are already registered" });
         }
 
-        console.log(req.files);
+        console.log("Received files:", req.files);
         if (!req.files || !req.files.clg_id || !req.files.aadharImage) {
-            console.log("can't receive files. Check that you have sent both the files");
-            return res.status(400).send({ "message": "can't receive files. Check that you have sent both the files" });
+            return res.status(400).json({ message: "Missing files. Please upload both images." });
         }
 
-        const uploadResultcollegeId = await cloudinary.uploader.upload(
-            req.files.clg_id[0].path, {
-                public_id: randoms + "" + req.files.clg_id[0].originalname,
-            }
-        );
+        console.log("Uploading images to Cloudinary...");
 
-        console.log(uploadResultcollegeId);
-        if (!uploadResultcollegeId) {
-            console.log("can't upload image try again");
-            return res.status(400).send({ "message": "can't upload college ID image try again" });
-        }
-
-        const uploadResultaadharcard = await cloudinary.uploader.upload(
-            req.files.aadharImage[0].path, {
-                public_id: randoms2 + "" + req.files.aadharImage[0].originalname,
-            }
-        );
-
-        console.log(uploadResultaadharcard);
-        if (!uploadResultaadharcard) {
-            console.log("can't upload aadhar image try again");
-            return res.status(400).send({ "message": "can't upload aadhar image try again" });
-        }
-
-        fs.unlink(req.files.clg_id[0].path, (err) => {
-            if (!err) {
-                console.log("college id file deleted");
-            } else {
-                console.log("error in deleting file college id");
-            }
+        // 🔹 Upload `clg_id` to Cloudinary
+        const uploadCollegeId = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream({ 
+                resource_type: "image",
+                public_id: `clg_id_${uuidv4()}`
+            }, (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }).end(req.files.clg_id[0].buffer);
         });
 
-        fs.unlink(req.files.aadharImage[0].path, (err) => {
-            if (!err) {
-                console.log("aadhar card file deleted");
-            } else {
-                console.log("error in deleting file aadhar card");
-            }
+        // 🔹 Upload `aadharImage` to Cloudinary
+        const uploadAadhar = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream({ 
+                resource_type: "image",
+                public_id: `aadhar_${uuidv4()}`
+            }, (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }).end(req.files.aadharImage[0].buffer);
         });
 
-        const newdata = await new Model({
-            "clg_id": uploadResultcollegeId.secure_url,
-            "registrationId": uuidv4(),
-            "event": event,
-            "teamName": teamName,
-            "teamLeaderName": teamLeaderName,
-            "email": email,
-            "mobile": parseInt(mobile),
-            "gender": gender,
-            "college": college,
-            "course": course,
-            "year": parseInt(year),
-            "rollno": rollno,
-            "aadhar": aadhar,
-            "teamSize": parseInt(teamSize),
-            "aadharImage": uploadResultaadharcard.secure_url
+        console.log("Upload successful!");
+
+        // 🔹 Save Registration Data in Database
+        const newUser = new Model({
+            clg_id: uploadCollegeId,
+            registrationId: uuidv4(),
+            event, teamName, teamLeaderName, email, mobile: parseInt(mobile), gender, 
+            college, course, year: parseInt(year), rollno, aadhar, teamSize: parseInt(teamSize),
+            aadharImage: uploadAadhar
         });
 
-        const savedata = await newdata.save();
+        const savedata = await newUser.save();
         if (savedata) {
             // Call the email sending function here
             const emailSent = await sendConfirmationEmail(savedata);

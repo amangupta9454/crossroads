@@ -18,11 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Cloudinary Configuration with .env
-cloudinary.config({ 
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.API_KEY,
-    api_secret: process.env.API_SECRET
-});
+
 
 // Email functionality
 const transporter = nodemailer.createTransport({
@@ -215,12 +211,19 @@ const connectiontodatabase = async () => {
 };
 
 connectiontodatabase();
+// cloudinary
+
+cloudinary.config({ 
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET
+});
 
 // Image storage configuration
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        
-        cb(null, './uploads');
+
+        cb(null, '/tmp');
     },
     filename: function (req, file, cb) {
         const uniqueid = uuidv4();

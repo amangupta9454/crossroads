@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState, useRef } from "react";
 import logo from "/logo.jpeg";
 import hietlogo from "/hietlogo.png";
@@ -30,7 +31,7 @@ const Home = () => {
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  }, [setMousePos]);
   const handleMouseMove = (e) => {
     const { clientX, clientY } = e;
     setMousePosition({ x: clientX - window.innerWidth / 2, y: clientY - window.innerHeight / 2 });

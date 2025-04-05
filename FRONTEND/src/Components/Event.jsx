@@ -24,13 +24,11 @@ const Event = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow-x-hidden">
-      {/* Events Section */}
       <section className="py-20 bg-gray-900 relative overflow-hidden">
-        {/* Running Background Animation */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-pink-500 to-purple-500 opacity-20 animate-gradient-x"></div>
 
         <div className="max-w-6xl mx-auto px-6 relative z-0">
-          <h2 className="text-4xl md:text-5xl font-bold text-center bg-gradient-to-r from-blue-400 to-pink-400 text-transparent bg-clip-text mb-16 animate-bounce pt-12  ">
+          <h2 className="text-4xl md:text-5xl font-bold text-center bg-gradient-to-r from-blue-400 to-pink-400 text-transparent bg-clip-text mb-16 animate-bounce pt-12">
             Our Events
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -39,16 +37,17 @@ const Event = () => {
                 to={`/event/${event.id}`}
                 key={event.id}
                 className="group relative bg-gray-800 rounded-xl overflow-hidden shadow-lg transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer"
+                aria-label={`Learn more about ${event.title}`}
               >
-                {/* Event Image */}
                 <img
                   src={event.img}
                   alt={event.title}
                   className="w-full h-48 object-cover transition-opacity duration-300 group-hover:opacity-80"
-                  onError={() => console.log(`Image failed to load: ${event.img}`)} // Debug image loading issues
+                  onError={(e) => {
+                    console.log(`Image failed to load: ${event.img}`);
+                    e.target.src = "/fallback.jpg"; // Ensure fallback.jpg exists in public
+                  }}
                 />
-
-                {/* Card Content */}
                 <div className="p-6 space-y-4">
                   <h3 className="text-2xl font-semibold text-blue-400 group-hover:text-pink-400 transition-colors duration-300">
                     {event.title}
@@ -59,8 +58,6 @@ const Event = () => {
                   <p className="text-gray-300 text-sm">
                     <span className="font-bold text-blue-400">Reg End:</span> {event.regEnd}
                   </p>
-
-                  {/* Know More Strip */}
                   <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                   <p className="text-blue-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute bottom-4 right-6">
                     Know More

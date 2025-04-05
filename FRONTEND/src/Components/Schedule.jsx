@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import  { useEffect, useState, useRef } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { gsap } from "gsap";
@@ -27,10 +25,13 @@ export default function Schedule() {
   const [activeDay, setActiveDay] = useState("Day 1");
   const [expandedIndex, setExpandedIndex] = useState(null);
   const [countdown, setCountdown] = useState("");
+  const timelineRef = useRef(null);
+  const titleRef = useRef(null);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
 
+    // GSAP animation for the timeline line
     gsap.fromTo(
       ".timeline-line",
       { height: 0 },
@@ -42,6 +43,14 @@ export default function Schedule() {
       }
     );
 
+    // GSAP animation for the title
+    gsap.fromTo(
+      titleRef.current,
+      { opacity: 0, y: -30 },
+      { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }
+    );
+
+    // Countdown logic
     const firstEventTime = schedule[activeDay][0].time;
     const today = new Date();
     const eventDate = new Date(today.toDateString() + " " + firstEventTime);
@@ -57,6 +66,30 @@ export default function Schedule() {
     }, 1000);
     return () => clearInterval(interval);
   }, [activeDay]);
+
+  useEffect(() => {
+    // GSAP animation for day switching
+    gsap.fromTo(
+      timelineRef.current,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5, ease: "power2.inOut" }
+    );
+
+    // GSAP animation for expanding/collapsing descriptions
+    const eventElements = timelineRef.current.querySelectorAll(".event-item");
+    eventElements.forEach((el, index) => {
+      const description = el.querySelector(".description");
+      if (index === expandedIndex) {
+        gsap.fromTo(
+          description,
+          { opacity: 0, height: 0 },
+          { opacity: 1, height: "auto", duration: 0.3, ease: "power2.out" }
+        );
+      } else {
+        gsap.to(description, { opacity: 0, height: 0, duration: 0.3, ease: "power2.in" });
+      }
+    });
+  }, [activeDay, expandedIndex]);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-black via-[#111] to-black text-white py-24 px-4 overflow-hidden">
@@ -76,20 +109,18 @@ export default function Schedule() {
         ))}
       </div>
 
-      {/* Cursor */}
+      {/* Custom Cursor */}
       <style>{`
         * { cursor: url('https://cur.cursors-4u.net/symbols/sym-7/sym696.ani'), auto !important; }
       `}</style>
 
       {/* Title */}
-      <motion.h1
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
+      <h1
+        ref={titleRef}
         className="text-4xl md:text-5xl font-extrabold text-center mb-12 drop-shadow-[0_0_20px_rgba(255,51,204,0.8)]"
       >
         🌟 Crossroad Fest Timeline
-      </motion.h1>
+      </h1>
 
       {/* Day Selector */}
       <div className="flex justify-center gap-4 mb-6 flex-wrap">
@@ -117,57 +148,45 @@ export default function Schedule() {
       </div>
 
       {/* Timeline */}
-      <div className="relative max-w-6xl mx-auto z-0">
+      <div ref={timelineRef} className="relative max-w-6xl mx-auto z-0">
         <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-pink-400 to-purple-600 timeline-line" />
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeDay}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {schedule[activeDay].map((event, index) => (
-              <motion.div
-                key={index}
-                data-aos="fade-up"
-                className={`relative z-0 mb-20 flex flex-col sm:flex-row ${
-                  index % 2 === 0 ? "sm:flex-row-reverse" : ""
+        <div>
+          {schedule[activeDay].map((event, index) => (
+            <div
+              key={index}
+              data-aos="fade-up"
+              className={`event-item relative z-0 mb-20 flex flex-col sm:flex-row ${
+                index % 2 === 0 ? "sm:flex-row-reverse" : ""
+              }`}
+            >
+              <div className="absolute left-1/2 -translate-x-1/2 w-6 h-6 rounded-full z-0 border-4 border-white bg-gradient-to-br from-purple-600 to-pink-500 animate-pulse shadow-[0_0_20px_rgba(255,105,180,0.8)]" />
+
+              <div
+                onClick={() => setExpandedIndex(index === expandedIndex ? null : index)}
+                className={`cursor-pointer w-full sm:w-1/2 px-6 py-6 mt-3 rounded-2xl border border-purple-400 bg-white/10 backdrop-blur-xl shadow-xl hover:scale-105 hover:border-pink-400 hover:shadow-pink-500 transition-transform duration-300 ${
+                  index % 2 === 0 ? "sm:ml-auto" : "sm:mr-auto"
                 }`}
               >
-                <div className="absolute left-1/2 -translate-x-1/2 w-6 h-6 rounded-full z-0 border-4 border-white bg-gradient-to-br from-purple-600 to-pink-500 animate-pulse shadow-[0_0_20px_rgba(255,105,180,0.8)]" />
-
-                <div
-                  onClick={() => setExpandedIndex(index === expandedIndex ? null : index)}
-                  className={`cursor-pointer w-full sm:w-1/2 px-6 py-6 mt-3 rounded-2xl border border-purple-400 bg-white/10 backdrop-blur-xl shadow-xl hover:scale-105 hover:border-pink-400 hover:shadow-pink-500 transition-transform duration-300 ${
-                    index % 2 === 0 ? "sm:ml-auto" : "sm:mr-auto"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2 text-sm text-purple-300">
-                    <span className="px-3 py-1 bg-purple-900 text-pink-300 rounded-full font-semibold shadow-inner animate-pulse">
-                      {event.time}
-                    </span>
-                    <span className="text-pink-400 font-medium">{activeDay}</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-1">{event.title}</h3>
-                  {expandedIndex === index && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      transition={{ duration: 0.3 }}
-                      className="text-purple-100 leading-relaxed mt-2"
-                    >
-                      {event.description}
-                    </motion.p>
-                  )}
-                  <p className="text-sm text-pink-300 mt-2">
-                    {expandedIndex === index ? "Tap to collapse ↑" : "Tap to expand ↓"}
-                  </p>
+                <div className="flex items-center gap-2 mb-2 text-sm text-purple-300">
+                  <span className="px-3 py-1 bg-purple-900 text-pink-300 rounded-full font-semibold shadow-inner animate-pulse">
+                    {event.time}
+                  </span>
+                  <span className="text-pink-400 font-medium">{activeDay}</span>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+                <h3 className="text-2xl font-bold text-white mb-1">{event.title}</h3>
+                <div className="description overflow-hidden">
+                  {expandedIndex === index && (
+                    <p className="text-purple-100 leading-relaxed mt-2">{event.description}</p>
+                  )}
+                </div>
+                <p className="text-sm text-pink-300 mt-2">
+                  {expandedIndex === index ? "Tap to collapse ↑" : "Tap to expand ↓"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

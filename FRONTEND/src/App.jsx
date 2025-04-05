@@ -1,12 +1,13 @@
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ToastContainer } from "react-toastify"; // Add this import
+
 import NavBar from "./Components/NavBar.jsx";
 import Home from "./Components/Home.jsx";
 import Contact from "./Components/Contact.jsx";
 import Registration from "./Components/Registration.jsx";
 import EventDetail from "./Components/EventDetail.jsx";
 import Event from "./Components/Event.jsx";
+import Schedule from "./Components/Schedule.jsx";
 
 const router = createBrowserRouter([
   {
@@ -33,6 +34,16 @@ const router = createBrowserRouter([
       <>
         <NavBar />
         <Registration />
+        
+      </>
+    ),
+  },
+  {
+    path: "/schedule",
+    element: (
+      <>
+        <NavBar />
+        <Schedule />
         
       </>
     ),

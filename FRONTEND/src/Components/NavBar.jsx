@@ -28,7 +28,7 @@ const NavBar = () => {
         { path: "/schedule", label: "Schedule" }, 
         { path: "/registration", label: "Registration" }, 
         { path: "/contact", label: "Contact" }, 
-        { path: "/login", label: "Login" }, 
+        
         ].map(({ path, label }) => (
           <li key={path}className="cursor-pointer capitalize font-medium text-white transition-all duration-300 ease-in-out hover:text-pink-500 hover:scale-110 hover:translate-x-2 hover:bg-gray-800 px-3 py-2 rounded-lg capitalize" onClick={handleLinkClick}>
             <Link to={path}>{label}</Link>
